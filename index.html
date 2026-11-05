@@ -1,0 +1,640 @@
+
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Telegram Group Exporter</title>
+<style>
+:root{
+  --bg:#f3f6fb;--surface:#fff;--text:#172238;
+  --muted:#728096;--line:#e4eaf2;--primary:#229ed9;
+  --primary-dark:#147db4;--green:#16a36b;--red:#df4b57;
+  --shadow:0 8px 30px rgba(27,53,89,.06)
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+header{background:var(--surface);border-bottom:1px solid var(--line);
+  padding:17px 5%;display:flex;align-items:center;
+  justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:12px;font-size:18px;font-weight:750}
+.logo{background:var(--primary);color:white;border-radius:13px;
+  width:42px;height:42px;display:grid;place-items:center;font-size:23px}
+.version{font-size:11px;color:var(--muted);background:var(--bg);
+  border:1px solid var(--line);padding:5px 10px;border-radius:30px}
+main{max-width:1200px;margin:auto;padding:30px 20px 65px}
+h1{font-size:27px;margin:0 0 6px;letter-spacing:-.6px}
+h2{font-size:16px;margin:0 0 15px}
+p{color:var(--muted);margin:0}
+.intro{margin-bottom:25px}
+.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:20px}
+.card{background:var(--surface);border:1px solid var(--line);
+  border-radius:17px;padding:23px;box-shadow:var(--shadow)}
+.drop{border:2px dashed #bed9eb;background:#f6fbff;
+  border-radius:13px;padding:35px 15px;text-align:center;
+  transition:.2s;cursor:pointer}
+.drop:hover,.drop.drag{border-color:var(--primary);background:#eaf7ff}
+.drop .symbol{font-size:37px;margin-bottom:10px}
+.drop strong{display:block;font-size:15px;margin-bottom:6px}
+.drop small{display:block;color:var(--muted);margin-top:7px}
+input[type=file]{display:none}
+.btn{border:0;border-radius:9px;padding:11px 17px;font-weight:650;
+  background:var(--primary);color:white;transition:.2s}
+.btn:hover:not(:disabled){background:var(--primary-dark)}
+.btn.secondary{background:#eaf2f8;color:#22658a}
+.btn.secondary:hover{background:#dcebf5}
+.btn.green{background:var(--green)}
+.btn.green:hover{background:#118456}
+.btn.danger{background:#fff0f1;color:var(--red)}
+.btn.danger:hover{background:#ffe2e5}
+.btn-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:17px}
+label{display:block;font-weight:600;margin-bottom:7px}
+.field{margin-bottom:15px}
+.control{width:100%;border:1px solid var(--line);background:white;
+  padding:11px 12px;border-radius:9px;outline:none;color:var(--text)}
+.control:focus{border-color:var(--primary);box-shadow:0 0 0 3px #229ed91b}
+.help{font-size:12px;color:var(--muted);margin-top:8px}
+.notice{background:#eff8ff;border:1px solid #d2e9fa;color:#286080;
+  padding:13px;border-radius:10px;font-size:12px;margin-top:15px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;
+  margin:20px 0}
+.stat{background:white;border:1px solid var(--line);
+  border-radius:13px;padding:19px;box-shadow:var(--shadow)}
+.stat b{font-size:25px;display:block;margin:3px 0}
+.stat span{font-size:12px;color:var(--muted)}
+.toolbar{display:flex;align-items:end;gap:12px;flex-wrap:wrap;
+  margin-bottom:17px}
+.toolbar .field{margin:0;flex:1;min-width:160px}
+.toolbar .field:first-child{flex:2}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;text-align:left;min-width:760px}
+th{background:#f5f8fc;color:#65758b;font-size:12px;
+  padding:13px;white-space:nowrap}
+td{padding:13px;border-top:1px solid var(--line);
+  font-size:13px;vertical-align:top}
+tr:hover td{background:#fafcff}
+.message{max-width:460px;min-width:220px;white-space:pre-wrap;
+  overflow-wrap:anywhere}
+.name{font-weight:650}
+.muted{color:var(--muted)}
+.pill{display:inline-block;background:#eaf6ff;color:#147fb6;
+  padding:3px 9px;border-radius:20px;font-size:11px;font-weight:650}
+.empty{text-align:center;padding:45px;color:var(--muted)}
+.pagination{display:flex;justify-content:space-between;
+  align-items:center;gap:10px;flex-wrap:wrap;margin-top:17px}
+.status{font-size:12px;color:var(--muted);margin-top:12px;min-height:20px}
+.status.error{color:var(--red)}
+.status.success{color:var(--green)}
+.check{display:flex;align-items:center;gap:8px;font-weight:400;
+  margin:12px 0 0}
+.check input{accent-color:var(--primary)}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+@media(max-width:800px){
+ .grid{grid-template-columns:1fr}
+ .stats{grid-template-columns:repeat(2,1fr)}
+ main{padding:22px 13px}
+ .card{padding:17px}
+ h1{font-size:23px}
+}
+@media(max-width:450px){
+ header{padding:13px}
+ .brand{font-size:15px}
+ .version{display:none}
+ .stat{padding:13px}
+ .stat b{font-size:21px}
+ .btn{padding:10px 12px;font-size:12px}
+ .drop{padding:25px 12px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">✈</div>
+    <span>Telegram Group Exporter</span>
+  </div>
+  <span class="version">Local Export Tool v1.0</span>
+</header>
+
+<main>
+  <section class="intro">
+    <h1>Telegram Group Exporter</h1>
+    <p>Import, cari, tapis dan eksport mesej kumpulan Telegram anda.</p>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Import Telegram Data</h2>
+      <div class="drop" id="dropZone" role="button" tabindex="0">
+        <div class="symbol">📂</div>
+        <strong>Seret fail JSON ke sini</strong>
+        <p>atau klik untuk memilih fail</p>
+        <small>Menyokong result.json daripada Telegram Desktop</small>
+        <input id="fileInput" type="file" accept=".json,application/json">
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="browseBtn">Pilih Fail JSON</button>
+        <button class="btn secondary" id="demoBtn">Cuba Data Demo</button>
+        <button class="btn danger" id="clearBtn">Kosongkan</button>
+      </div>
+      <div class="status" id="status" aria-live="polite"></div>
+      <div class="notice">
+        🔒 Data diproses dalam browser anda sahaja.
+        Tiada fail dihantar ke server oleh aplikasi ini.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Tetapan Eksport</h2>
+      <div class="field">
+        <label for="filename">Nama fail</label>
+        <input class="control" id="filename"
+          value="telegram_export" maxlength="100">
+      </div>
+      <div class="field">
+        <label for="format">Format fail</label>
+        <select class="control" id="format">
+          <option value="xls">Excel (.xls)</option>
+          <option value="txt">Text (.txt)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="separator">Pemisah TXT</label>
+        <select class="control" id="separator">
+          <option value="tab">Tab</option>
+          <option value="comma">Koma</option>
+          <option value="pipe">Pipe (|)</option>
+        </select>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="filteredOnly" checked>
+        Eksport hasil yang ditapis sahaja
+      </label>
+      <div class="btn-row">
+        <button class="btn green" id="exportBtn" disabled>
+          ↓ Download Data
+        </button>
+      </div>
+      <p class="help">
+        Fail XLS menggunakan Excel XML Spreadsheet yang boleh
+        dibuka menggunakan Microsoft Excel. Bukan format XLSX.
+      </p>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="stat">
+      <span>Jumlah Mesej</span>
+      <b id="totalMessages">0</b>
+    </div>
+    <div class="stat">
+      <span>Penghantar Unik</span>
+      <b id="totalUsers">0</b>
+    </div>
+    <div class="stat">
+      <span>Hasil Carian</span>
+      <b id="totalFiltered">0</b>
+    </div>
+    <div class="stat">
+      <span>Julat Tarikh</span>
+      <b id="dateRange" style="font-size:15px">—</b>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Senarai Mesej <span id="groupName" class="muted"></span></h2>
+
+    <div class="toolbar">
+      <div class="field">
+        <label for="search">Cari mesej / nama</label>
+        <input class="control" id="search"
+          placeholder="Taip kata kunci...">
+      </div>
+      <div class="field">
+        <label for="sender">Penghantar</label>
+        <select class="control" id="sender">
+          <option value="">Semua penghantar</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fromDate">Dari tarikh</label>
+        <input class="control" id="fromDate" type="date">
+      </div>
+      <div class="field">
+        <label for="toDate">Hingga tarikh</label>
+        <input class="control" id="toDate" type="date">
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Tarikh</th>
+            <th>Penghantar</th>
+            <th>Mesej</th>
+            <th>Jenis</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="5" class="empty">
+            Belum ada data. Sila import fail Telegram JSON.
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span id="pageInfo" class="muted">0 rekod</span>
+      <div class="btn-row" style="margin:0">
+        <button class="btn secondary" id="prevBtn" disabled>← Sebelum</button>
+        <button class="btn secondary" id="nextBtn" disabled>Seterusnya →</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Telegram Group Exporter • Vanilla HTML, CSS & JavaScript
+</footer>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+let records = [];
+let filtered = [];
+let groupTitle = "";
+let page = 1;
+const pageSize = 25;
+
+function setStatus(message, type = "") {
+  $("status").textContent = message;
+  $("status").className = "status " + type;
+}
+
+function extractText(value) {
+  if (typeof value === "string") return value;
+  if (!Array.isArray(value)) return "";
+  return value.map(item => {
+    if (typeof item === "string") return item;
+    if (item && typeof item.text === "string") return item.text;
+    if (item && Array.isArray(item.text)) return extractText(item.text);
+    return "";
+  }).join("");
+}
+
+function normalizeMessage(m) {
+  const text = extractText(m.text);
+  const media = m.media_type || m.file ||
+    m.photo || m.mime_type || "";
+  return {
+    id: String(m.id ?? ""),
+    date: String(m.date || ""),
+    sender: String(m.from || m.actor || "Unknown"),
+    senderId: String(m.from_id || ""),
+    text: text || (media ? "[Media: " + media + "]" : ""),
+    type: String(m.type || (media ? "media" : "message"))
+  };
+}
+
+function importData(data) {
+  if (!data || !Array.isArray(data.messages)) {
+    throw new Error(
+      "Format tidak sah. Fail mesti mengandungi array 'messages'."
+    );
+  }
+
+  records = data.messages
+    .filter(m => m && typeof m === "object")
+    .map(normalizeMessage);
+
+  groupTitle = String(data.name || data.title || "Telegram Chat");
+  $("groupName").textContent = "— " + groupTitle;
+
+  $("search").value = "";
+  $("fromDate").value = "";
+  $("toDate").value = "";
+  $("sender").value = "";
+  populateSenders();
+  applyFilters();
+
+  setStatus(
+    records.length.toLocaleString("ms-MY") +
+    " rekod berjaya diimport.", "success"
+  );
+}
+
+function populateSenders() {
+  const names = [...new Set(records.map(r => r.sender))].sort();
+  $("sender").replaceChildren(new Option("Semua penghantar", ""));
+  names.forEach(name => $("sender").add(new Option(name, name)));
+}
+
+function applyFilters() {
+  const q = $("search").value.trim().toLowerCase();
+  const sender = $("sender").value;
+  const from = $("fromDate").value;
+  const to = $("toDate").value;
+
+  filtered = records.filter(r => {
+    const date = r.date.slice(0,10);
+    return (!q ||
+      r.text.toLowerCase().includes(q) ||
+      r.sender.toLowerCase().includes(q) ||
+      r.id.toLowerCase().includes(q)) &&
+      (!sender || r.sender === sender) &&
+      (!from || (date && date >= from)) &&
+      (!to || (date && date <= to));
+  });
+
+  page = 1;
+  updateStats();
+  renderTable();
+}
+
+function updateStats() {
+  $("totalMessages").textContent = records.length.toLocaleString("ms-MY");
+  $("totalUsers").textContent =
+    new Set(records.map(r => r.senderId || r.sender)).size
+      .toLocaleString("ms-MY");
+  $("totalFiltered").textContent = filtered.length.toLocaleString("ms-MY");
+
+  const dates = records.map(r => r.date.slice(0,10))
+    .filter(Boolean).sort();
+
+  $("dateRange").textContent = dates.length
+    ? dates[0] + (dates[0] !== dates[dates.length-1]
+      ? " – " + dates[dates.length-1] : "")
+    : "—";
+
+  $("exportBtn").disabled = records.length === 0;
+}
+
+function cell(text, className = "") {
+  const td = document.createElement("td");
+  td.textContent = text;
+  if (className) td.className = className;
+  return td;
+}
+
+function renderTable() {
+  const tbody = $("tableBody");
+  tbody.replaceChildren();
+
+  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  page = Math.min(Math.max(1,page),pages);
+  const start = (page - 1) * pageSize;
+  const rows = filtered.slice(start,start + pageSize);
+
+  if (!rows.length) {
+    const tr = document.createElement("tr");
+    const td = cell(records.length
+      ? "Tiada mesej sepadan dengan penapis."
+      : "Belum ada data. Sila import fail Telegram JSON.", "empty");
+    td.colSpan = 5;
+    tr.append(td);
+    tbody.append(tr);
+  }
+
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+    tr.append(
+      cell(r.id),
+      cell(r.date, "muted"),
+      cell(r.sender, "name"),
+      cell(r.text, "message")
+    );
+    const typeCell = document.createElement("td");
+    const badge = document.createElement("span");
+    badge.className = "pill";
+    badge.textContent = r.type;
+    typeCell.append(badge);
+    tr.append(typeCell);
+    tbody.append(tr);
+  });
+
+  $("pageInfo").textContent = filtered.length
+    ? `Paparan ${start+1}–${Math.min(start+pageSize,filtered.length)} ` +
+      `daripada ${filtered.length} | Halaman ${page}/${pages}`
+    : "0 rekod";
+
+  $("prevBtn").disabled = page <= 1;
+  $("nextBtn").disabled = page >= pages;
+}
+
+async function readFile(file) {
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith(".json")) {
+    setStatus("Sila pilih fail JSON sahaja.", "error");
+    return;
+  }
+
+  setStatus("Sedang membaca fail...");
+  try {
+    const content = await file.text();
+    const data = JSON.parse(content);
+    importData(data);
+  } catch (err) {
+    setStatus("Gagal import: " + err.message, "error");
+  }
+}
+
+function resetData() {
+  records = [];
+  filtered = [];
+  groupTitle = "";
+  page = 1;
+  $("fileInput").value = "";
+  $("groupName").textContent = "";
+  $("search").value = "";
+  $("fromDate").value = "";
+  $("toDate").value = "";
+  $("sender").replaceChildren(new Option("Semua penghantar", ""));
+  updateStats();
+  renderTable();
+  setStatus("Data telah dikosongkan.");
+}
+
+function xmlEscape(value) {
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&apos;");
+}
+
+function excelSafe(value) {
+  const str = String(value ?? "");
+  // Prevent spreadsheet formula interpretation.
+  return /^[\s]*[=+\-@]/.test(str) ? "'" + str : str;
+}
+
+function createXLS(rows) {
+  const headers = ["ID","Tarikh","Penghantar","Sender ID","Mesej","Jenis"];
+  const values = rows.map(r =>
+    [r.id,r.date,r.sender,r.senderId,r.text,r.type]);
+
+  const makeRow = cells => "<Row>" + cells.map(v =>
+    '<Cell><Data ss:Type="String">' +
+    xmlEscape(excelSafe(v)) +
+    "</Data></Cell>"
+  ).join("") + "</Row>";
+
+  const xml = '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<?mso-application progid="Excel.Sheet"?>' +
+    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ' +
+    'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
+    '<Worksheet ss:Name="Telegram Messages"><Table>' +
+    makeRow(headers) +
+    values.map(makeRow).join("") +
+    '</Table></Worksheet></Workbook>';
+
+  return new Blob([xml], {
+    type:"application/vnd.ms-excel;charset=utf-8"
+  });
+}
+
+function createTXT(rows) {
+  const headers = ["ID","Tarikh","Penghantar","Sender ID","Mesej","Jenis"];
+  const mode = $("separator").value;
+  const delimiter = mode === "comma" ? "," :
+    mode === "pipe" ? "|" : "\t";
+
+  const quote = value => {
+    let str = excelSafe(value).replace(/\r\n?/g,"\n");
+    if (str.includes('"') || str.includes(delimiter) ||
+        str.includes("\n")) {
+      str = '"' + str.replace(/"/g,'""') + '"';
+    }
+    return str;
+  };
+
+  const lines = [headers.join(delimiter)];
+  rows.forEach(r => {
+    lines.push(
+      [r.id,r.date,r.sender,r.senderId,r.text,r.type]
+        .map(quote).join(delimiter)
+    );
+  });
+
+  return new Blob(["\uFEFF",lines.join("\r\n")], {
+    type:"text/plain;charset=utf-8"
+  });
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+function exportData() {
+  const rows = $("filteredOnly").checked ? filtered : records;
+  if (!rows.length) {
+    setStatus("Tiada rekod untuk dieksport.", "error");
+    return;
+  }
+
+  const format = $("format").value;
+  const filename = ($("filename").value.trim() || "telegram_export")
+    .replace(/[\\/:*?"<>|]/g,"_");
+
+  try {
+    const blob = format === "xls" ? createXLS(rows) : createTXT(rows);
+    downloadBlob(blob,filename + "." + format);
+    setStatus(
+      rows.length + " rekod disediakan untuk download.", "success"
+    );
+  } catch(err) {
+    setStatus("Eksport gagal: " + err.message, "error");
+  }
+}
+
+function loadDemo() {
+  const names = ["Ali","Siti","Ahmad","Farah","Admin"];
+  const texts = [
+    "Assalamualaikum semua!",
+    "Boleh kongsi maklumat program?",
+    "Terima kasih atas maklumat.",
+    "Mesyuarat bermula pukul 9 pagi.",
+    "Dokumen sudah dikemaskini.",
+    "Baik, saya akan semak semula.",
+    "Ada sebarang pertanyaan?",
+    "Program akan berlangsung esok."
+  ];
+
+  const messages = Array.from({length:120},(_,i) => {
+    const d = new Date(Date.UTC(2026,9,1,8,0,0) + i*3600000);
+    return {
+      id:i+1,
+      date:d.toISOString().replace("T"," ").slice(0,19),
+      from:names[i%names.length],
+      from_id:"user"+(i%names.length+1),
+      text:texts[i%texts.length],
+      type:"message"
+    };
+  });
+
+  importData({name:"Demo Group",messages});
+  setStatus("120 mesej demo dimuatkan.", "success");
+}
+
+$("browseBtn").addEventListener("click",()=>$("fileInput").click());
+$("dropZone").addEventListener("click",()=>$("fileInput").click());
+$("dropZone").addEventListener("keydown",e=>{
+  if(e.key==="Enter" || e.key===" "){
+    e.preventDefault();
+    $("fileInput").click();
+  }
+});
+$("fileInput").addEventListener("change",e=>readFile(e.target.files[0]));
+$("demoBtn").addEventListener("click",loadDemo);
+$("clearBtn").addEventListener("click",resetData);
+$("exportBtn").addEventListener("click",exportData);
+
+["search","sender","fromDate","toDate"].forEach(id=>{
+  $(id).addEventListener(
+    id==="search" ? "input" : "change",applyFilters
+  );
+});
+
+$("prevBtn").addEventListener("click",()=>{
+  page--;
+  renderTable();
+});
+$("nextBtn").addEventListener("click",()=>{
+  page++;
+  renderTable();
+});
+
+const drop = $("dropZone");
+drop.addEventListener("dragover",e=>{
+  e.preventDefault();
+  drop.classList.add("drag");
+});
+drop.addEventListener("dragleave",()=>drop.classList.remove("drag"));
+drop.addEventListener("drop",e=>{
+  e.preventDefault();
+  drop.classList.remove("drag");
+  readFile(e.dataTransfer.files[0]);
+});
+
+updateStats();
+renderTable();
+</script>
+</body>
+</html>
